@@ -33,10 +33,25 @@ async function getProductDetails(upc){
     return data;
 }
 
-async function checkIsSupport(name){
+async function checkIsSupport(name,title){
     const productName = name.trim().toLowerCase().replace(/'/g, '');
     const isIsraelProduct = brands.find(product => product.toLowerCase().replace(/'/g, '') === productName);
-    return isIsraelProduct;
+    if(isIsraelProduct){
+        return isIsraelProduct;
+    }
+
+
+    for (let index = 0; index < brands.length; index++) {
+        const element = brands[index];
+        if(title.toLowerCase().includes(element.toLowerCase()))
+        {
+            return element
+        }
+        
+    }
+
+
+    return false;
 }
 
 const app = express();
@@ -54,12 +69,12 @@ app.get("/api/v1/check/:upc", async (req,res) => {
             message: `This product is safe to go with.`
         })
     }
-    const {brand} = details?.items[0];
-    const isSupport = await checkIsSupport(brand);
+    const {brand,title} = details?.items[0];
+    const isSupport = await checkIsSupport(brand,title);
     if(isSupport){
        return res.json({
             isSupport: true,
-            message: `${brand} brands is associated with or supported by Israel.`
+            message: `${brand ? brand :  typeof isSupport == 'string' ? isSupport : ''} brands is associated with or supported by Israel.`
         })
     }
    
@@ -68,6 +83,7 @@ app.get("/api/v1/check/:upc", async (req,res) => {
         message: `${brand} brands is safe to go with.`
     })
     }catch(err){
+        console.log(err.message)
         res.json({
             isSupport: false,
             message: `This product is safe to go with.`
